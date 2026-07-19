@@ -1,0 +1,9 @@
+{
+    "Algorithm": "ASCON-128 (NIST Lightweight Cryptography Standard)",
+    "Key_Size_Bits": 128,
+    "Nonce_Size_Bits": 128,
+    "Structure": "Sponge Construction via SPN",
+    "Target_Hardware": "Resource-Constrained Edge Node (ESP32/MSP430)",
+    "Student_Name": "Nguyen Bao Cuong",
+    "Student_ID": "231A010778"
+}

@@ -1,0 +1,15 @@
+=== NHẬT KÝ ĐO ĐẠC HIỆU NĂNG MẬT MÃ NHẸ (BENCHMARK LOG) ===
+Thiết bị: Device-ID: VHU-IoT-231A010778
+
+[Gói tin 01] Gốc: Temp: 28.1C | Humid: 65% | Status: OK
+          -> Mã hóa (Hex): 159f4bffa1e8f1123b684140d9db86e1e117076f...
+          -> Trễ xử lý: 1.8573 ms | RAM tiêu thụ: 343 bytes
+----------------------------------------------------------
+[Gói tin 02] Gốc: Temp: 29.5C | Humid: 70% | Status: Operational
+          -> Mã hóa (Hex): 159f4bffa1e8f1133b6c4140d9db86e1e117076f...
+          -> Trễ xử lý: 0.1620 ms | RAM tiêu thụ: 354 bytes
+----------------------------------------------------------
+[Gói tin 03] Gốc: Temp: 31.2C | Humid: 75% | Status: Warning_High_Temp
+          -> Mã hóa (Hex): 159f4bffa1e8f01b3b6b4140d9db86e1e117076f...
+          -> Trễ xử lý: 0.1724 ms | RAM tiêu thụ: 354 bytes
+----------------------------------------------------------

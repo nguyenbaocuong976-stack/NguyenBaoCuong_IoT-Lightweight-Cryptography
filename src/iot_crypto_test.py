@@ -1,32 +1,25 @@
 import time
 import secrets
 import tracemalloc
+import json
+import os
 
 def ascon_permutation_lwc(state):
-    """
-    Mô phỏng hàm hoán vị phi tuyến tính lớp S-Box và khuếch tán tuyến tính 
-    của giải thuật mật mã nhẹ ASCON tiêu chuẩn NIST LWC.
-    """
-    # Lớp hoán vị thay thế (Substitution Layer via S-Box) và XOR bit trạng thái nội bộ
+    """[MÔ PHỎNG HƯỚNG F]: Lớp hoán vị thay thế (S-Box) và khuếch tán bit của ASCON-128"""
     for i in range(len(state)):
         state[i] = (state[i] ^ 0x3C) & 0xFF
-        state[i] = ((state[i] << 1) | (state[i] >> 7)) & 0xFF  # Dịch bit vòng (Circular Shift)
+        state[i] = ((state[i] << 1) | (state[i] >> 7)) & 0xFF
     return state
 
 def ascon_128_aead_encrypt(key, nonce, associated_data, plaintext):
-    """
-    Quy trình mã hóa xác thực AEAD mô phỏng theo cơ chế Sponge của ASCON-128
-    """
-    # 1. Khởi tạo trạng thái nội bộ (Internal State) phối hợp Key và Nonce 128-bit
-    state = bytearray(secret_key + nonce)
+    """[CƠ CHẾ AEAD]: Mã hóa kết hợp xác thực dữ liệu liên kết theo cấu trúc Sponge"""
+    state = bytearray(key + nonce)
     state = ascon_permutation_lwc(state)
     
-    # 2. Xử lý Dữ liệu liên kết xác thực (Associated Data) để đảm bảo tính toàn vẹn
     for b in associated_data:
         state[0] ^= b
         state = ascon_permutation_lwc(state)
         
-    # 3. Tiến hành mã hóa văn bản rõ (Plaintext) tạo văn bản mã hóa (Ciphertext)
     ciphertext = bytearray()
     for i, b in enumerate(plaintext):
         state[i % len(state)] ^= b
@@ -36,45 +29,76 @@ def ascon_128_aead_encrypt(key, nonce, associated_data, plaintext):
             
     return bytes(ciphertext)
 
+def save_framework_files(config_data, log_data):
+    """Tự động xuất tệp tin cấu hình và nhật ký vào cấu trúc thư mục quy định"""
+    os.makedirs('configs', exist_ok=True)
+    os.makedirs('results/logs', exist_ok=True)
+    
+    # Xuất cấu hình cho Chương 3 & 4
+    with open('configs/crypto_config.json', 'w', encoding='utf-8') as f:
+        json.dump(config_data, f, ensure_ascii=False, indent=4)
+        
+    # Xuất file nhật ký hệ thống làm minh chứng thực nghiệm
+    with open('results/logs/benchmark_report.log', 'w', encoding='utf-8') as f:
+        f.write(log_data)
+
 def main():
     print("==========================================================")
-    print("      HỆ THỐNG ĐÁNH GIÁ MẬT MÃ NHẸ ASCON-128 (HƯỚNG F)    ")
+    print("   HỆ THỐNG KIỂM THỬ MẬT MÃ NHẸ IoT HOÀN CHỈNH (6 TUẦN)   ")
     print("==========================================================")
     
-    # Giả lập dữ liệu cảm biến phát sinh từ vi điều khiển đầu cuối
-    sensor_plaintext = b"Nhiet-do: 29.5C | Do-am: 70% | Status: Operational"
+    # Chuỗi gói tin giả lập phát sinh liên tục từ cảm biến nhà thông minh
+    sensor_payloads = [
+        b"Temp: 28.1C | Humid: 65% | Status: OK",
+        b"Temp: 29.5C | Humid: 70% | Status: Operational",
+        b"Temp: 31.2C | Humid: 75% | Status: Warning_High_Temp"
+    ]
     associated_data = b"Device-ID: VHU-IoT-231A010778"
     
-    print(f"[1. Dữ liệu liên kết (AD)]: {associated_data.decode()}")
-    print(f"[2. Dữ liệu gói tin gốc]:   {sensor_plaintext.decode()}")
-    
-    # Khởi tạo tham số an toàn theo đặc tả ASCON-128 (Key 128-bit, Nonce 128-bit)
-    global secret_key, nonce
+    # Khởi tạo tham số bảo mật
     secret_key = secrets.token_bytes(16)
     nonce = secrets.token_bytes(16)
     
-    # Bắt đầu giám sát tài nguyên bộ nhớ RAM và thời gian thực thi
-    tracemalloc.start()
-    start_time = time.perf_counter_ns()
+    config_details = {
+        "Algorithm": "ASCON-128 (NIST Lightweight Cryptography Standard)",
+        "Key_Size_Bits": 128,
+        "Nonce_Size_Bits": 128,
+        "Structure": "Sponge Construction via SPN",
+        "Target_Hardware": "Resource-Constrained Edge Node (ESP32/MSP430)",
+        "Student_Name": "Nguyen Bao Cuong",
+        "Student_ID": "231A010778"
+    }
     
-    # Thực thi mã hóa bảo mật
-    ciphertext = ascon_128_aead_encrypt(secret_key, nonce, associated_data, sensor_plaintext)
+    log_output = "=== NHẬT KÝ ĐO ĐẠC HIỆU NĂNG MẬT MÃ NHẸ (BENCHMARK LOG) ===\n"
+    log_output += f"Thiết bị: {associated_data.decode()}\n\n"
     
-    end_time = time.perf_counter_ns()
-    current_ram, peak_ram = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
-    
-    execution_time_ms = (end_time - start_time) / 1_000_000
-    
-    print("----------------------------------------------------------")
-    print(f"[3. Khóa bảo mật (Key)]:     {secret_key.hex()}")
-    print(f"[4. Số ngẫu nhiên (Nonce)]:  {nonce.hex()}")
-    print(f"[5. Chuỗi mã hóa (Hex)]:     {ciphertext.hex()[:50]}...")
-    print(f"[6. Độ dài gói tin đầu ra]: {len(ciphertext)} bytes")
-    print(f"[7. Thời gian thực thi]:     {execution_time_ms:.4f} ms")
-    print(f"[8. RAM tiêu thụ lớn nhất]:  {peak_ram} bytes")
+    # Tiến hành vòng lặp Benchmark thu thập số liệu
+    for idx, plaintext in enumerate(sensor_payloads, 1):
+        tracemalloc.start()
+        start_time = time.perf_counter_ns()
+        
+        ciphertext = ascon_128_aead_encrypt(secret_key, nonce, associated_data, plaintext)
+        
+        end_time = time.perf_counter_ns()
+        _, peak_ram = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        
+        latency_ms = (end_time - start_time) / 1_000_000
+        
+        stream_log = f"[Gói tin {idx:02d}] Gốc: {plaintext.decode()}\n"
+        stream_log += f"          -> Mã hóa (Hex): {ciphertext.hex()[:40]}...\n"
+        stream_log += f"          -> Trễ xử lý: {latency_ms:.4f} ms | RAM tiêu thụ: {peak_ram} bytes\n"
+        stream_log += "----------------------------------------------------------\n"
+        
+        print(stream_log, end="")
+        log_output += stream_log
+
+    # Ghi file tự động xuống các thư mục
+    save_framework_files(config_details, log_output)
     print("==========================================================")
-    print(">> Đánh giá: Thuật toán ASCON-128 đạt chuẩn tối ưu chi phí tài nguyên.")
+    print(">> Đã cập nhật tệp thông số vào: configs/crypto_config.json")
+    print(">> Đã xuất nhật ký hiệu năng vào: results/logs/benchmark_report.log")
+    print("==========================================================")
 
 if __name__ == "__main__":
     main()
